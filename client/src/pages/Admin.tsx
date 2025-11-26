@@ -18,7 +18,7 @@ const Admin = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { isAuthenticated, logout, login } = useAuthStore();
-  const sessionTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const sessionTimeoutRef = useRef<number | null>(null);
   
   const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'messages' | 'settings'>('dashboard');
   const [showLoginForm, setShowLoginForm] = useState(!isAuthenticated);
@@ -517,9 +517,9 @@ const Admin = () => {
       await firebaseAuthService.signIn(user.email!, currentPassword);
       
       // Update password
-      const auth = (await import('../config/firebase')).auth;
+      const { auth: authInstance } = await import('../config/firebase');
       const { updatePassword } = await import('firebase/auth');
-      await updatePassword(user, newPassword);
+      await updatePassword(authInstance.currentUser!, newPassword);
       
       alert('Password changed successfully!');
       setCurrentPassword('');
