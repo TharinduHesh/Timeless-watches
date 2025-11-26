@@ -234,9 +234,9 @@ const Admin = () => {
     }
   };
 
-  const { data: products = [] } = useQuery({
+  const { data: products = [] } = useQuery<Product[]>({
     queryKey: ['admin-products'],
-    queryFn: adminProductService.getAll,
+    queryFn: firestoreProductService.getAll,
     enabled: isAuthenticated,
   });
 
@@ -348,7 +348,7 @@ const Admin = () => {
         });
         formData.append('productId', id);
         
-        const files = Array.from(newImages);
+        const files = Array.from(newImages) as File[];
         newImageUrls = await firestoreStorageService.uploadImages(files, id);
       }
       
