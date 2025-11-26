@@ -2,9 +2,8 @@ import { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { adminProductService } from '../services/api';
+import { firestoreProductService, firestoreStorageService, firestoreContactService } from '../services/firestore';
 import { firebaseAuthService } from '../services/firebaseAuth';
-import { firestoreContactService } from '../services/firestore';
 import { useAuthStore } from '../store/authStore';
 import type { Product } from '../types';
 import { 
@@ -308,14 +307,9 @@ const Admin = () => {
       // Upload images if selected
       if (selectedImages.length > 0) {
         setUploadingImages(true);
-        const formData = new FormData();
-        selectedImages.forEach(file => {
-          formData.append('images', file);
-        });
-        formData.append('productId', 'temp_' + Date.now());
-        
-        const response = await adminProductService.uploadMultipleImages(formData);
-        imageUrls = response.urls;
+        const productId = 'temp_' + Date.now();
+        const files = Array.from(selectedImages);
+        imageUrls = await firestoreStorageService.uploadImages(files, productId);
       }
       
       const productData = {
@@ -324,7 +318,7 @@ const Admin = () => {
         images: imageUrls,
       };
       
-      return adminProductService.create(productData);
+      return firestoreProductService.create(productData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });
@@ -354,8 +348,8 @@ const Admin = () => {
         });
         formData.append('productId', id);
         
-        const response = await adminProductService.uploadMultipleImages(formData);
-        newImageUrls = response.urls;
+        const files = Array.from(newImages);
+        newImageUrls = await firestoreStorageService.uploadImages(files, id);
       }
       
       const allImages = [...existingImages, ...newImageUrls];
@@ -365,7 +359,7 @@ const Admin = () => {
         images: allImages,
       };
       
-      return adminProductService.update(id, productData);
+      return firestoreProductService.update(id, productData);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });
@@ -384,7 +378,7 @@ const Admin = () => {
   });
 
   const deleteProductMutation = useMutation({
-    mutationFn: adminProductService.delete,
+    mutationFn: firestoreProductService.delete,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['admin-products'] });
       queryClient.invalidateQueries({ queryKey: ['products'] });
