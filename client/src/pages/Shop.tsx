@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useQuery } from '@tanstack/react-query';
 import { useSearchParams } from 'react-router-dom';
-import { productService } from '../services/api';
+import { firestoreProductService as productService } from '../services/firestore';
 import ProductCard from '../components/product/ProductCard';
 import type { Filter } from '../types';
 

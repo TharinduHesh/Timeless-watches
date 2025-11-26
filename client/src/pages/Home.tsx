@@ -1,13 +1,13 @@
 import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useQuery } from '@tanstack/react-query';
-import { productService } from '../services/api';
+import { firestoreProductService } from '../services/firestore';
 import ProductCard from '../components/product/ProductCard';
 
 const Home = () => {
   const { data: products = [], isLoading } = useQuery({
     queryKey: ['products'],
-    queryFn: productService.getAll,
+    queryFn: firestoreProductService.getAll,
   });
   
   // Get products with discounts for Special Offers section

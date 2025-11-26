@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import { useQuery } from '@tanstack/react-query';
 import { FiShoppingCart, FiHeart, FiArrowLeft } from 'react-icons/fi';
-import { productService } from '../services/api';
+import { firestoreProductService as productService } from '../services/firestore';
 import { useCartStore } from '../store/cartStore';
 
 const ProductDetail = () => {
