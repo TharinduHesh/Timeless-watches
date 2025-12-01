@@ -389,16 +389,22 @@ export const firestoreReviewService = {
   getByProduct: async (productId: string) => {
     try {
       const reviewsRef = collection(db, REVIEWS_COLLECTION);
-      const q = query(reviewsRef, where('productId', '==', productId), orderBy('createdAt', 'desc'));
+      const q = query(reviewsRef, where('productId', '==', productId));
       const snapshot = await getDocs(q);
       
-      return snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({
+      const reviews = snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({
         id: doc.id,
         ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
       }));
+      
+      // Sort by date on client side
+      return reviews.sort((a: any, b: any) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
     } catch (error) {
       console.error('Error fetching reviews:', error);
-      throw error;
+      return []; // Return empty array instead of throwing
     }
   },
 

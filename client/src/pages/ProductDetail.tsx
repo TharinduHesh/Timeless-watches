@@ -13,6 +13,7 @@ const ProductDetail = () => {
   const [quantity, setQuantity] = useState(1);
   const [selectedImage, setSelectedImage] = useState(0);
   const { addItem, openCart } = useCartStore();
+  const { toggleWishlist, isInWishlist } = useWishlistStore();
 
   const { data: product, isLoading, error } = useQuery({
     queryKey: ['product', id],
@@ -52,7 +53,6 @@ const ProductDetail = () => {
   const images = product.images || [product.image];
   const isOutOfStock = product.stock === 0;
   const hasDiscount = product.discount && product.discount > 0;
-  const { toggleWishlist, isInWishlist } = useWishlistStore();
   const inWishlist = isInWishlist(product.id);
 
   const handleAddToCart = () => {
