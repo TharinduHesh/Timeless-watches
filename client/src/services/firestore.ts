@@ -385,11 +385,11 @@ export const firestoreContactService = {
 // ============= REVIEWS =============
 
 export const firestoreReviewService = {
-  // Get all reviews for a product
+  // Get all reviews for a product (only approved)
   getByProduct: async (productId: string) => {
     try {
       const reviewsRef = collection(db, REVIEWS_COLLECTION);
-      const q = query(reviewsRef, where('productId', '==', productId));
+      const q = query(reviewsRef, where('productId', '==', productId), where('approved', '==', true));
       const snapshot = await getDocs(q);
       
       const reviews = snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({
@@ -408,12 +408,36 @@ export const firestoreReviewService = {
     }
   },
 
-  // Create review
+  // Get all pending reviews (admin only)
+  getPending: async () => {
+    try {
+      const reviewsRef = collection(db, REVIEWS_COLLECTION);
+      const q = query(reviewsRef, where('approved', '==', false));
+      const snapshot = await getDocs(q);
+      
+      const reviews = snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({
+        id: doc.id,
+        ...doc.data(),
+        createdAt: doc.data().createdAt?.toDate?.()?.toISOString() || new Date().toISOString(),
+      }));
+      
+      // Sort by date on client side
+      return reviews.sort((a: any, b: any) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+    } catch (error) {
+      console.error('Error fetching pending reviews:', error);
+      return []; // Return empty array instead of throwing
+    }
+  },
+
+  // Create review (pending approval)
   create: async (reviewData: { productId: string; userId: string; userName: string; userEmail: string; rating: number; comment: string }) => {
     try {
       const reviewsRef = collection(db, REVIEWS_COLLECTION);
       const docRef = await addDoc(reviewsRef, {
         ...reviewData,
+        approved: false,
         createdAt: Timestamp.now(),
       });
       
@@ -438,6 +462,20 @@ export const firestoreReviewService = {
       });
     } catch (error) {
       console.error('Error updating review:', error);
+      throw error;
+    }
+  },
+
+  // Approve review
+  approve: async (reviewId: string) => {
+    try {
+      const reviewRef = doc(db, REVIEWS_COLLECTION, reviewId);
+      await updateDoc(reviewRef, {
+        approved: true,
+        updatedAt: Timestamp.now(),
+      });
+    } catch (error) {
+      console.error('Error approving review:', error);
       throw error;
     }
   },

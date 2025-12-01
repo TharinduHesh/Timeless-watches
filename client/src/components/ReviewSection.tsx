@@ -51,7 +51,7 @@ export const ReviewSection = ({ productId }: ReviewSectionProps) => {
       setComment('');
       setRating(5);
       setShowForm(false);
-      alert('Review submitted successfully!');
+      alert('Review submitted successfully! It will appear after admin approval.');
     },
     onError: (error: any) => {
       alert('Failed to submit review: ' + error.message);

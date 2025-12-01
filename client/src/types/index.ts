@@ -53,6 +53,7 @@ export interface Review {
   comment: string;
   createdAt: string;
   updatedAt?: string;
+  approved?: boolean;
 }
 
 export interface WishlistItem {

@@ -80,23 +80,23 @@ service cloud.firestore {
     
     // Reviews collection
     match /reviews/{reviewId} {
-      // Anyone can read reviews (public)
-      allow read: if true;
+      // Anyone can read approved reviews, admins can read all
+      allow read: if resource.data.approved == true || isAdmin();
       
-      // Only authenticated users can create reviews
+      // Only authenticated users can create reviews (pending approval)
       allow create: if isAuthenticated()
-                    && request.resource.data.keys().hasAll(['productId', 'userId', 'userName', 'userEmail', 'rating', 'comment'])
+                    && request.resource.data.keys().hasAll(['productId', 'userId', 'userName', 'userEmail', 'rating', 'comment', 'approved'])
                     && request.resource.data.productId is string
                     && request.resource.data.userId is string
                     && request.resource.data.rating is number
                     && request.resource.data.rating >= 1
                     && request.resource.data.rating <= 5
                     && request.resource.data.comment is string
-                    && request.resource.data.comment.size() >= 10;
+                    && request.resource.data.comment.size() >= 10
+                    && request.resource.data.approved == false;
       
-      // Only the review author can update their own review
-      allow update: if isAuthenticated() 
-                    && request.auth.uid == resource.data.userId;
+      // Admins can approve reviews, authors can update their own
+      allow update: if isAdmin() || (isAuthenticated() && request.auth.uid == resource.data.userId);
       
       // Only the review author or admins can delete reviews
       allow delete: if isAuthenticated() 

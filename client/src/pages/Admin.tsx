@@ -2,13 +2,13 @@ import { useState, useEffect, useRef } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useNavigate } from 'react-router-dom';
-import { firestoreProductService, firestoreStorageService, firestoreContactService, firestoreSettingsService } from '../services/firestore';
+import { firestoreProductService, firestoreStorageService, firestoreContactService, firestoreSettingsService, firestoreReviewService } from '../services/firestore';
 import { firebaseAuthService } from '../services/firebaseAuth';
 import { useAuthStore } from '../store/authStore';
 import type { Product } from '../types';
 import { 
   FiLogOut, FiPlus, FiEdit2, FiTrash2, FiImage, FiX, 
-  FiPackage, FiSettings, FiUpload, FiMail 
+  FiPackage, FiSettings, FiUpload, FiMail, FiStar, FiCheck 
 } from 'react-icons/fi';
 
 const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000';
@@ -19,7 +19,7 @@ const Admin = () => {
   const { isAuthenticated, logout, login } = useAuthStore();
   const sessionTimeoutRef = useRef<number | null>(null);
   
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'messages' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'products' | 'reviews' | 'messages' | 'settings'>('dashboard');
   const [showLoginForm, setShowLoginForm] = useState(!isAuthenticated);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -230,6 +230,36 @@ const Admin = () => {
     queryKey: ['contact-messages'],
     queryFn: firestoreContactService.getAll,
     enabled: isAuthenticated,
+  });
+
+  const { data: pendingReviews = [] } = useQuery({
+    queryKey: ['pending-reviews'],
+    queryFn: firestoreReviewService.getPending,
+    enabled: isAuthenticated,
+  });
+
+  const approveReviewMutation = useMutation({
+    mutationFn: (reviewId: string) => firestoreReviewService.approve(reviewId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pending-reviews'] });
+      alert('Review approved successfully!');
+    },
+    onError: (error) => {
+      console.error('Error approving review:', error);
+      alert('Failed to approve review');
+    },
+  });
+
+  const deleteReviewMutation = useMutation({
+    mutationFn: (reviewId: string) => firestoreReviewService.delete(reviewId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pending-reviews'] });
+      alert('Review deleted successfully!');
+    },
+    onError: (error) => {
+      console.error('Error deleting review:', error);
+      alert('Failed to delete review');
+    },
   });
 
   const updateMessageStatusMutation = useMutation({
@@ -684,6 +714,21 @@ const Admin = () => {
             Manage Products
           </button>
           <button
+            onClick={() => setActiveTab('reviews')}
+            className={`px-6 py-3 rounded-lg font-semibold transition-all ${
+              activeTab === 'reviews'
+                ? 'bg-gradient-to-r from-accent to-accent-strong text-black'
+                : 'bg-white/[0.03] text-white hover:bg-white/[0.05]'
+            }`}
+          >
+            <FiStar className="inline mr-2" />
+            Reviews {pendingReviews.length > 0 && (
+              <span className="ml-1 bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">
+                {pendingReviews.length}
+              </span>
+            )}
+          </button>
+          <button
             onClick={() => setActiveTab('messages')}
             className={`px-6 py-3 rounded-lg font-semibold transition-all ${
               activeTab === 'messages'
@@ -1084,6 +1129,75 @@ const Admin = () => {
                   </tbody>
                 </table>
               </div>
+            </div>
+          </div>
+        )}
+
+        {/* Reviews Tab */}
+        {activeTab === 'reviews' && (
+          <div className="space-y-6">
+            <div className="card-glass p-6">
+              <h2 className="text-2xl font-bold text-accent mb-6">Pending Reviews</h2>
+              
+              {pendingReviews.length === 0 ? (
+                <div className="text-center py-12">
+                  <FiStar size={48} className="mx-auto text-gray-600 mb-4" />
+                  <p className="text-gray-400">No pending reviews</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {pendingReviews.map((review: any) => (
+                    <div key={review.id} className="bg-white/[0.03] p-6 rounded-lg border border-white/[0.05]">
+                      <div className="flex items-start justify-between mb-4">
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="font-semibold text-white">{review.userName}</span>
+                            <span className="text-sm text-gray-400">
+                              {new Date(review.createdAt).toLocaleDateString()}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1 mb-2">
+                            {[1, 2, 3, 4, 5].map((star) => (
+                              <FiStar
+                                key={star}
+                                className={`w-4 h-4 ${
+                                  star <= review.rating ? 'fill-accent text-accent' : 'text-gray-400'
+                                }`}
+                              />
+                            ))}
+                          </div>
+                          <p className="text-sm text-gray-400 mb-2">
+                            Product ID: {review.productId}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => approveReviewMutation.mutate(review.id)}
+                            disabled={approveReviewMutation.isPending}
+                            className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center gap-2"
+                          >
+                            <FiCheck size={18} />
+                            Approve
+                          </button>
+                          <button
+                            onClick={() => {
+                              if (window.confirm('Are you sure you want to delete this review?')) {
+                                deleteReviewMutation.mutate(review.id);
+                              }
+                            }}
+                            disabled={deleteReviewMutation.isPending}
+                            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center gap-2"
+                          >
+                            <FiTrash2 size={18} />
+                            Delete
+                          </button>
+                        </div>
+                      </div>
+                      <p className="text-white">{review.comment}</p>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
