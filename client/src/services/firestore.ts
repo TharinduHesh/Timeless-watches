@@ -28,6 +28,7 @@ const PRODUCTS_COLLECTION = 'products';
 const ORDERS_COLLECTION = 'orders';
 const CONTACT_MESSAGES_COLLECTION = 'contactMessages';
 const SETTINGS_COLLECTION = 'settings';
+const REVIEWS_COLLECTION = 'reviews';
 
 // ============= PRODUCTS =============
 
@@ -381,10 +382,94 @@ export const firestoreContactService = {
   },
 };
 
+// ============= REVIEWS =============
+
+export const firestoreReviewService = {
+  // Get all reviews for a product
+  getByProduct: async (productId: string) => {
+    try {
+      const reviewsRef = collection(db, REVIEWS_COLLECTION);
+      const q = query(reviewsRef, where('productId', '==', productId), orderBy('createdAt', 'desc'));
+      const snapshot = await getDocs(q);
+      
+      return snapshot.docs.map((doc: QueryDocumentSnapshot<DocumentData>) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+    } catch (error) {
+      console.error('Error fetching reviews:', error);
+      throw error;
+    }
+  },
+
+  // Create review
+  create: async (reviewData: { productId: string; userId: string; userName: string; userEmail: string; rating: number; comment: string }) => {
+    try {
+      const reviewsRef = collection(db, REVIEWS_COLLECTION);
+      const docRef = await addDoc(reviewsRef, {
+        ...reviewData,
+        createdAt: Timestamp.now(),
+      });
+      
+      return {
+        id: docRef.id,
+        ...reviewData,
+        createdAt: new Date().toISOString(),
+      };
+    } catch (error) {
+      console.error('Error creating review:', error);
+      throw error;
+    }
+  },
+
+  // Update review
+  update: async (reviewId: string, data: { rating: number; comment: string }) => {
+    try {
+      const reviewRef = doc(db, REVIEWS_COLLECTION, reviewId);
+      await updateDoc(reviewRef, {
+        ...data,
+        updatedAt: Timestamp.now(),
+      });
+    } catch (error) {
+      console.error('Error updating review:', error);
+      throw error;
+    }
+  },
+
+  // Delete review
+  delete: async (reviewId: string) => {
+    try {
+      const reviewRef = doc(db, REVIEWS_COLLECTION, reviewId);
+      await deleteDoc(reviewRef);
+    } catch (error) {
+      console.error('Error deleting review:', error);
+      throw error;
+    }
+  },
+
+  // Get average rating for a product
+  getAverageRating: async (productId: string) => {
+    try {
+      const reviews = await firestoreReviewService.getByProduct(productId);
+      if (reviews.length === 0) return { average: 0, count: 0 };
+      
+      const total = reviews.reduce((sum: number, review: any) => sum + review.rating, 0);
+      return {
+        average: total / reviews.length,
+        count: reviews.length,
+      };
+    } catch (error) {
+      console.error('Error calculating average rating:', error);
+      return { average: 0, count: 0 };
+    }
+  },
+};
+
 export default {
   products: firestoreProductService,
   storage: firestoreStorageService,
   orders: firestoreOrderService,
   contactMessages: firestoreContactService,
   settings: firestoreSettingsService,
+  reviews: firestoreReviewService,
 };

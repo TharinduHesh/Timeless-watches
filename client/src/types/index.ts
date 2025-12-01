@@ -42,3 +42,20 @@ export interface Filter {
   search?: string;
   sort?: 'price-asc' | 'price-desc' | 'name-asc' | 'name-desc' | 'newest';
 }
+
+export interface Review {
+  id: string;
+  productId: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+  updatedAt?: string;
+}
+
+export interface WishlistItem {
+  productId: string;
+  addedAt: string;
+}

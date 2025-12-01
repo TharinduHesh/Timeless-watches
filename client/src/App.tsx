@@ -16,6 +16,7 @@ import Privacy from './pages/Privacy';
 import Returns from './pages/Returns';
 import Shipping from './pages/Shipping';
 import Warranty from './pages/Warranty';
+import Wishlist from './pages/Wishlist';
 import Admin from './pages/Admin';
 import './App.css';
 
@@ -43,6 +44,7 @@ function AppContent() {
           <Route path="/shop" element={<Shop />} />
           <Route path="/product/:id" element={<ProductDetail />} />
           <Route path="/checkout" element={<Checkout />} />
+          <Route path="/wishlist" element={<Wishlist />} />
           <Route path="/about" element={<About />} />
           <Route path="/contact" element={<Contact />} />
           <Route path="/faq" element={<FAQ />} />

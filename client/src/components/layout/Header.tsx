@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { FiShoppingCart, FiMenu, FiX, FiSearch } from 'react-icons/fi';
+import { FiShoppingCart, FiMenu, FiX, FiSearch, FiHeart } from 'react-icons/fi';
 import { useCartStore } from '../../store/cartStore';
+import { useWishlistStore } from '../../store/wishlistStore';
 import Cart from '../../components/Cart';
 import logo from '../../assets/logo.jpg';
 
@@ -9,7 +10,9 @@ const Header = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const { getTotalItems, openCart } = useCartStore();
+  const { items: wishlistItems } = useWishlistStore();
   const totalItems = getTotalItems();
+  const wishlistCount = wishlistItems.length;
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,6 +73,19 @@ const Header = () => {
 
             {/* Cart & Menu Icons */}
             <div className="flex items-center space-x-4">
+              <Link
+                to="/wishlist"
+                className="icon-btn relative p-2 text-white hover:text-accent transition-colors"
+                aria-label="Wishlist"
+              >
+                <FiHeart size={24} />
+                {wishlistCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                    {wishlistCount}
+                  </span>
+                )}
+              </Link>
+
               <button
                 onClick={openCart}
                 className="icon-btn relative p-2 text-white hover:text-accent transition-colors"
@@ -125,6 +141,13 @@ const Header = () => {
                   onClick={() => setIsMenuOpen(false)}
                 >
                   Shop
+                </Link>
+                <Link 
+                  to="/wishlist" 
+                  className="text-white/85 hover:text-accent transition-colors py-2"
+                  onClick={() => setIsMenuOpen(false)}
+                >
+                  Wishlist {wishlistCount > 0 && `(${wishlistCount})`}
                 </Link>
                 <Link 
                   to="/about" 

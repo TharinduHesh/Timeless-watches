@@ -77,5 +77,30 @@ service cloud.firestore {
       // Only authenticated admins can read, update, or delete messages
       allow read, update, delete: if isAdmin();
     }
+    
+    // Reviews collection
+    match /reviews/{reviewId} {
+      // Anyone can read reviews (public)
+      allow read: if true;
+      
+      // Only authenticated users can create reviews
+      allow create: if isAuthenticated()
+                    && request.resource.data.keys().hasAll(['productId', 'userId', 'userName', 'userEmail', 'rating', 'comment'])
+                    && request.resource.data.productId is string
+                    && request.resource.data.userId is string
+                    && request.resource.data.rating is number
+                    && request.resource.data.rating >= 1
+                    && request.resource.data.rating <= 5
+                    && request.resource.data.comment is string
+                    && request.resource.data.comment.size() >= 10;
+      
+      // Only the review author can update their own review
+      allow update: if isAuthenticated() 
+                    && request.auth.uid == resource.data.userId;
+      
+      // Only the review author or admins can delete reviews
+      allow delete: if isAuthenticated() 
+                    && (request.auth.uid == resource.data.userId || isAdmin());
+    }
   }
 }

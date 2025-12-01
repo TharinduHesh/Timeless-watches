@@ -5,6 +5,8 @@ import { useQuery } from '@tanstack/react-query';
 import { FiShoppingCart, FiHeart, FiArrowLeft } from 'react-icons/fi';
 import { firestoreProductService as productService } from '../services/firestore';
 import { useCartStore } from '../store/cartStore';
+import { useWishlistStore } from '../store/wishlistStore';
+import { ReviewSection } from '../components/ReviewSection';
 
 const ProductDetail = () => {
   const { id } = useParams<{ id: string }>();
@@ -50,10 +52,16 @@ const ProductDetail = () => {
   const images = product.images || [product.image];
   const isOutOfStock = product.stock === 0;
   const hasDiscount = product.discount && product.discount > 0;
+  const { toggleWishlist, isInWishlist } = useWishlistStore();
+  const inWishlist = isInWishlist(product.id);
 
   const handleAddToCart = () => {
     addItem(product, quantity);
     openCart();
+  };
+
+  const handleWishlistToggle = () => {
+    toggleWishlist(product.id);
   };
 
   return (
@@ -210,11 +218,23 @@ const ProductDetail = () => {
                 <FiShoppingCart size={20} />
                 {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
               </button>
-              <button className="p-4 border-2 border-accent text-accent hover:bg-accent hover:text-black transition-all rounded-full">
-                <FiHeart size={24} />
+              <button 
+                onClick={handleWishlistToggle}
+                className={`p-4 border-2 transition-all rounded-full ${
+                  inWishlist
+                    ? 'bg-red-500 border-red-500 text-white'
+                    : 'border-accent text-accent hover:bg-accent hover:text-black'
+                }`}
+              >
+                <FiHeart size={24} fill={inWishlist ? 'currentColor' : 'none'} />
               </button>
             </div>
           </div>
+        </div>
+
+        {/* Reviews Section */}
+        <div className="mt-16">
+          <ReviewSection productId={product.id} />
         </div>
       </div>
     </>

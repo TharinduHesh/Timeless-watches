@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
-import { FiShoppingCart } from 'react-icons/fi';
+import { FiShoppingCart, FiHeart } from 'react-icons/fi';
 import type { Product } from '../../types';
 import { useCartStore } from '../../store/cartStore';
+import { useWishlistStore } from '../../store/wishlistStore';
 
 interface ProductCardProps {
   product: Product;
@@ -9,11 +10,19 @@ interface ProductCardProps {
 
 const ProductCard = ({ product }: ProductCardProps) => {
   const { addItem, openCart } = useCartStore();
+  const { toggleWishlist, isInWishlist } = useWishlistStore();
 
   const handleAddToCart = () => {
     addItem(product, 1);
     openCart();
   };
+
+  const handleWishlistToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    toggleWishlist(product.id);
+  };
+
+  const inWishlist = isInWishlist(product.id);
 
   const isOutOfStock = product.stock === 0;
   const hasDiscount = product.discount && product.discount > 0;
@@ -21,6 +30,21 @@ const ProductCard = ({ product }: ProductCardProps) => {
 
   return (
     <div className="product-card group relative">
+      {/* Wishlist Button */}
+      <button
+        onClick={handleWishlistToggle}
+        className="absolute top-3 left-3 z-10 p-2 rounded-full bg-white/10 backdrop-blur-sm hover:bg-white/20 transition-all duration-300 group/heart"
+        aria-label={inWishlist ? 'Remove from wishlist' : 'Add to wishlist'}
+      >
+        <FiHeart
+          className={`w-5 h-5 transition-all duration-300 ${
+            inWishlist 
+              ? 'fill-red-500 text-red-500 scale-110' 
+              : 'text-white group-hover/heart:scale-110'
+          }`}
+        />
+      </button>
+
       {/* Discount Badge */}
       {hasDiscount ? (
         <div className="product-discount absolute top-3 right-3 z-10">
